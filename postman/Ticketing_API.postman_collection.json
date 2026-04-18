@@ -1,0 +1,1020 @@
+{
+    "info": {
+        "_postman_id": "f1a2b3c4-d5e6-7890-abcd-1234567890ab",
+        "name": "Ticketing API",
+        "description": "REST API Collection untuk Ticketing System — CodeIgniter 3.\n\nSemua endpoint membutuhkan Bearer Token di header Authorization.\nBase URL menggunakan variable {{base_url}}.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "auth": {
+        "type": "bearer",
+        "bearer": [
+            {
+                "key": "token",
+                "value": "{{api_token}}",
+                "type": "string"
+            }
+        ]
+    },
+    "item": [
+        {
+            "name": "Dashboard",
+            "description": "Endpoints untuk dashboard statistik.",
+            "item": [
+                {
+                    "name": "Dashboard Overview",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/dashboard?month=4&year=2026",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "dashboard"
+                            ],
+                            "query": [
+                                {
+                                    "key": "month",
+                                    "value": "4"
+                                },
+                                {
+                                    "key": "year",
+                                    "value": "2026"
+                                }
+                            ]
+                        },
+                        "description": "Mengambil data komprehensif untuk dashboard."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket",
+            "description": "Endpoint ticket — View only (GET).\nMendukung filter: date_start, date_end, department, feedback (all/ada/belum).\nDetail ticket termasuk timeline, supporting, attachments, dan feedback.",
+            "item": [
+                {
+                    "name": "List Tickets",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket?page=1&per_page=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1",
+                                    "description": "Halaman (default: 1)"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10",
+                                    "description": "Jumlah per halaman (default: 10)"
+                                },
+                                {
+                                    "key": "date_start",
+                                    "value": "",
+                                    "description": "Filter tanggal mulai (YYYY-MM-DD)",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "date_end",
+                                    "value": "",
+                                    "description": "Filter tanggal akhir (YYYY-MM-DD)",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "description": "Filter nama department",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "feedback",
+                                    "value": "all",
+                                    "description": "Filter feedback: all | ada | belum",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "# List Tickets\n\nMengambil daftar tiket dengan **pagination** dan **filter opsional**.\n\n---\n\n## Authentication\n| Header | Value |\n| --- | --- |\n| `Authorization` | `Bearer <token>` |\n\n## Query Parameters\n| Parameter | Tipe | Required | Default | Keterangan |\n| --- | --- | --- | --- | --- |\n| `page` | int | No | 1 | Nomor halaman |\n| `per_page` | int | No | 10 | Jumlah item per halaman |\n| `date_start` | string | No | - | Filter tanggal mulai (YYYY-MM-DD) |\n| `date_end` | string | No | - | Filter tanggal akhir (YYYY-MM-DD) |\n| `department` | string | No | - | Filter berdasarkan department |\n| `feedback` | string | No | all | Filter feedback: `all` / `ada` / `belum` |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"message\": \"Data berhasil diambil\",\n    \"data\": [\n        {\n            \"id\": \"T202604030001\",\n            \"date\": \"2026-04-03\",\n            \"department\": \"IT\",\n            \"category_id\": \"HW\",\n            \"category_name\": \"Hardware\",\n            \"description\": \"Lampu mati di Lantai 3\",\n            \"priority\": \"1\",\n            \"status\": \"1\",\n            \"feedback_date\": \"2026-04-04 10:00:00\",\n            \"feedback_result\": \"Sudah diperbaiki\"\n        }\n    ],\n    \"meta\": { \"current_page\": 1, \"per_page\": 10, \"total\": 7 }\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `401` | Token tidak valid atau tidak ada |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Ticket",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket/{{ticket_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket",
+                                "{{ticket_id}}"
+                            ]
+                        },
+                        "description": "# Detail Ticket\n\nMenampilkan **detail lengkap** sebuah tiket beserta:\n- **Timeline** — Riwayat perjalanan tiket (data-driven dari `ticket_history` + `ticket_tracking`)\n- **can_finish** / **finish_reason** — Flag untuk FE show/hide tombol Finish\n- **Supporting** — Data pendukung dari feedback terbaru\n- **Attachments** — File lampiran\n- **Feedback** — Feedback terbaru\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | Yes | ID tiket, contoh: `T202604030001` |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": {\n        \"id\": \"T202604030001\",\n        \"category_id\": \"HW\",\n        \"category_name\": \"Hardware\",\n        \"status\": \"1\",\n        \"timeline\": [\n            { \"tracking_id\": 1, \"label\": \"Dibuat\", \"timestamp\": \"2026-04-03 09:20:21\", \"is_done\": true },\n            { \"tracking_id\": 2, \"label\": \"Diterima\", \"timestamp\": null, \"is_done\": false },\n            { \"tracking_id\": 3, \"label\": \"Feedback\", \"timestamp\": null, \"is_done\": false },\n            { \"tracking_id\": 4, \"label\": \"Finish\", \"timestamp\": null, \"is_done\": false }\n        ],\n        \"can_finish\": false,\n        \"finish_reason\": \"Belum ada feedback\",\n        \"supporting\": null,\n        \"attachments\": [],\n        \"feedback\": { \"id\": null, \"description\": null, \"date\": null }\n    }\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Tiket tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket Category",
+            "description": "CRUD master kategori ticket.\nValidasi create/update: description dan department wajib ada.",
+            "item": [
+                {
+                    "name": "List Categories",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-category?page=1&per_page=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-category"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "# List Categories\n\nMengambil daftar **master kategori** tiket dengan pagination.\n\n---\n\n## Query Parameters\n| Parameter | Tipe | Required | Default | Keterangan |\n| --- | --- | --- | --- | --- |\n| `page` | int | No | 1 | Nomor halaman |\n| `per_page` | int | No | 10 | Jumlah per halaman |\n| `department` | string | No | - | Filter by department |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [ { \"id\": \"PBL\", \"description\": \"Hardware\", \"department\": \"IT\" } ],\n    \"meta\": { \"current_page\": 1, \"per_page\": 10, \"total\": 3 }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Category",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-category/{{category_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-category",
+                                "{{category_id}}"
+                            ]
+                        },
+                        "description": "# Detail Category\n\nMengambil **detail** satu kategori berdasarkan ID.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `category_id` | string | Yes | ID kategori (contoh: `PBL`) |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Kategori tidak ditemukan |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Category",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.id) {",
+                                    "    pm.environment.set('category_id', jsonData.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Hardware\",\n    \"department\": \"IT\",\n    \"date\": \"2026-04-07\",\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-category",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-category"
+                            ]
+                        },
+                        "description": "# Create Category\n\nMembuat **kategori baru** untuk tiket.\n\n---\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `description` | string | **Yes** | Nama kategori |\n| `department` | string | **Yes** | Department pemilik |\n| `date` | string | No | Tanggal (YYYY-MM-DD) |\n| `status` | string | No | Status kategori |\n\n## Contoh Request Body\n```json\n{\n    \"description\": \"Hardware\",\n    \"department\": \"IT\",\n    \"date\": \"2026-04-07\",\n    \"status\": \"active\"\n}\n```\n\n## Response Sukses (201 Created)\n```json\n{ \"status\": true, \"message\": \"Kategori berhasil ditambahkan\", \"data\": { \"id\": \"HW\" } }\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `422` | Validasi gagal (field wajib kosong) |\n\n> **Catatan:** ID kategori baru otomatis tersimpan ke Postman variable `{{category_id}}`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Category",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Hardware Updated\",\n    \"department\": \"IT\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-category/{{category_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-category",
+                                "{{category_id}}"
+                            ]
+                        },
+                        "description": "# Update Category\n\nMemperbarui data **kategori** yang sudah ada.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `category_id` | string | Yes | ID kategori |\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `description` | string | **Yes** | Nama kategori |\n| `department` | string | **Yes** | Department pemilik |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Kategori tidak ditemukan |\n| `422` | Validasi gagal |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Category",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-category/{{category_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-category",
+                                "{{category_id}}"
+                            ]
+                        },
+                        "description": "# Delete Category\n\n**Soft delete** kategori — data tidak dihapus permanen, hanya mengisi kolom `deleted_at`.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `category_id` | string | Yes | ID kategori |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Kategori tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket Department",
+            "description": "Endpoint departemen — View only (GET).\nData dari tabel ticket_departement (read only, tidak ada CUD).",
+            "item": [
+                {
+                    "name": "List Departments",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-department",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-department"
+                            ]
+                        },
+                        "description": "# List Departments\n\nMengambil **seluruh data departemen** (read-only, tidak ada Create/Update/Delete).\n\n---\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [ { \"id\": \"P001-O0003\", \"name\": \"IT\" } ]\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Department",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-department/{{department_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-department",
+                                "{{department_id}}"
+                            ]
+                        },
+                        "description": "# Detail Department\n\nMengambil **detail** satu departemen berdasarkan ID.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `department_id` | string | Yes | ID departemen |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Departemen tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket Feedback",
+            "description": "CRUD feedback + business logic.\n\nPOST menggunakan multipart/form-data karena mendukung upload file (opsional).\nSaat POST create, akan:\n1. INSERT ke ticket_feedback\n2. Upload files[] ke ticket_attachment (jika ada)\n3. UPDATE ticket.status → 'Feedback'\nSemua dalam satu transaksi.",
+            "item": [
+                {
+                    "name": "List Feedbacks",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-feedback?page=1&per_page=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-feedback"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "ticket_id",
+                                    "value": "",
+                                    "description": "Filter by ticket_id",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "description": "Filter by department",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "# List Feedbacks\n\nMengambil daftar **semua feedback** tiket dengan pagination dan filter opsional.\n\n---\n\n## Query Parameters\n| Parameter | Tipe | Required | Default | Keterangan |\n| --- | --- | --- | --- | --- |\n| `page` | int | No | 1 | Nomor halaman |\n| `per_page` | int | No | 10 | Jumlah per halaman |\n| `ticket_id` | string | No | - | Filter berdasarkan ticket_id |\n| `department` | string | No | - | Filter berdasarkan department |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [\n        {\n            \"ticket_id\": \"T20260408FIN01\",\n            \"description\": \"Sudah dicek dan kabel FO putus\",\n            \"created_at\": \"2026-04-06 04:08:07\",\n            \"created_byname\": \"Teknisi IT\"\n        }\n    ],\n    \"meta\": { \"current_page\": 1, \"per_page\": 10, \"total\": 5 }\n}\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Feedback",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-feedback/{{feedback_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-feedback",
+                                "{{feedback_id}}"
+                            ]
+                        },
+                        "description": "# Detail Feedback\n\nMengambil **detail feedback** untuk satu tiket.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `feedback_id` | string | Yes | **Gunakan `ticket_id`** (contoh: `T20260408FIN01`). Tabel `ticket_feedback` memiliki relasi 1:1 dengan tiket. |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": {\n        \"ticket_id\": \"T20260408FIN01\",\n        \"description\": \"Sudah dicek dan kabel FO putus, sudah disambung kembali.\",\n        \"created_at\": \"2026-04-06 04:08:07\",\n        \"created_byname\": \"Teknisi IT\"\n    }\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Feedback tidak ditemukan (tiket belum punya feedback) |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Feedback (with files)",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.feedback && jsonData.data.feedback.id) {",
+                                    "    pm.environment.set('feedback_id', jsonData.data.feedback.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "ticket_id",
+                                    "value": "{{ticket_id}}",
+                                    "description": "(Required) ID ticket yang di-feedback",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "IT",
+                                    "description": "(Required) Nama department",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "action",
+                                    "value": "Sudah dilakukan perbaikan langsung",
+                                    "description": "(Required) Aksi dari dept/admin",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "analysis",
+                                    "value": "Kabel FO terputus",
+                                    "description": "(Optional) Analisis laporan",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "results",
+                                    "value": "Koneksi kembali normal",
+                                    "description": "(Optional) Detail hasil perbaikan",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "status",
+                                    "value": "active",
+                                    "description": "(Optional) Status feedback",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "date",
+                                    "value": "2026-04-07",
+                                    "description": "(Optional) Tanggal feedback",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location_id",
+                                    "value": "10",
+                                    "description": "(Optional) ID lokasi",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "location_name",
+                                    "value": "Bunker Dipatiukur",
+                                    "description": "(Optional) Nama lokasi",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "created_by",
+                                    "value": "usr_002",
+                                    "description": "(Optional) User ID pembuat",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "created_byname",
+                                    "value": "Budi Santoso",
+                                    "description": "(Optional) Nama pembuat",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "category_id",
+                                    "value": "HW",
+                                    "description": "(Optional) Koreksi kategori tiket",
+                                    "type": "text"
+                                },
+                                {
+                                    "key": "files[]",
+                                    "description": "(Optional) File lampiran, bisa multiple. Max 10MB/file. Format: jpg/jpeg/png/pdf",
+                                    "type": "file",
+                                    "src": []
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-feedback",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-feedback"
+                            ]
+                        },
+                        "description": "# Create Feedback (with file upload)\n\nSubmit **feedback baru** dari teknisi. Mendukung upload **multiple files** (`multipart/form-data`).\n\n---\n\n## Business Logic (Transaksional)\nDalam **satu transaksi DB**:\n1. `INSERT` ke `ticket_feedback`\n2. Upload file → `INSERT` ke `ticket_attachment` (jika ada)\n3. Log event tracking \"Feedback\" via `TimelineService::logEvent()`\n4. Auto-sync `ticket.status` → `3` (Feedback)\n\n## Request Body (Form-Data)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | **Yes** | ID tiket yang di-feedback |\n| `department` | string | **Yes** | Nama department |\n| `action` | string | **Yes** | Isi tindakan/feedback |\n| `category_id` | string | No | Koreksi kategori tiket (bersumber dari master kategori) |\n| `analysis` | string | No | Analisis teknis |\n| `results` | string | No | Hasil pekerjaan |\n| `status` | string | No | Status feedback |\n| `date` | string | No | Tanggal feedback (YYYY-MM-DD) |\n| `location_id` | string | No | ID lokasi |\n| `location_name` | string | No | Nama lokasi |\n| `created_by` | string | No | User ID pembuat |\n| `created_byname` | string | No | Nama pembuat |\n| `files[]` | file | No | File lampiran (multi-file, max 10MB, format: jpg/jpeg/png/pdf) |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"message\": \"Feedback berhasil disimpan\",\n    \"data\": {\n        \"feedback\": { \"id\": 1, \"ticket_id\": \"T202604030001\" },\n        \"uploaded_files\": [],\n        \"ticket_category_updated_to\": \"HW\"\n    }\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `422` | Validasi gagal (field wajib kosong) |\n| `500` | Gagal upload file / transaksi gagal |\n\n> **Catatan:** Feedback ID otomatis tersimpan ke variable `{{feedback_id}}`.\n\n> **Penting:** Setelah feedback dibuat, countdown 24 jam untuk tombol Finish dimulai."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Feedback",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Updated feedback description\",\n    \"department\": \"IT\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-feedback/{{feedback_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-feedback",
+                                "{{feedback_id}}"
+                            ]
+                        },
+                        "description": "# Update Feedback\n\nUpdate data **feedback** yang sudah ada.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `feedback_id` | string | Yes | Gunakan `ticket_id` |\n\n## Request Body (JSON)\n| Field | Tipe | Required |\n| --- | --- | --- |\n| `description` | string | No |\n| `department` | string | No |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Feedback tidak ditemukan |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Feedback",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-feedback/{{feedback_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-feedback",
+                                "{{feedback_id}}"
+                            ]
+                        },
+                        "description": "# Delete Feedback\n\n**Soft delete** feedback.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `feedback_id` | string | Yes | Gunakan `ticket_id` |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Feedback tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket Priority",
+            "description": "CRUD master prioritas ticket.\nValidasi create/update: description dan department wajib ada.",
+            "item": [
+                {
+                    "name": "List Priorities",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-priority?page=1&per_page=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-priority"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "# List Priorities\n\nMengambil daftar **master prioritas** tiket dengan pagination.\n\n---\n\n## Query Parameters\n| Parameter | Tipe | Required | Default | Keterangan |\n| --- | --- | --- | --- | --- |\n| `page` | int | No | 1 | Nomor halaman |\n| `per_page` | int | No | 10 | Jumlah per halaman |\n| `department` | string | No | - | Filter by department |\n\n## Response Sukses (200 OK)\n```json\n{ \"status\": true, \"data\": [ { \"id\": \"1\", \"description\": \"Urgent\", \"department\": \"IT\" } ] }\n```"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Priority",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-priority/{{priority_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-priority",
+                                "{{priority_id}}"
+                            ]
+                        },
+                        "description": "# Detail Priority\n\nMengambil **detail** satu prioritas berdasarkan ID.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `priority_id` | string | Yes | ID prioritas |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Prioritas tidak ditemukan |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Priority",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.id) {",
+                                    "    pm.environment.set('priority_id', jsonData.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Urgent\",\n    \"department\": \"IT\",\n    \"date\": \"2026-04-07\",\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-priority",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-priority"
+                            ]
+                        },
+                        "description": "# Create Priority\n\nMembuat **prioritas baru**.\n\n---\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `description` | string | **Yes** | Nama prioritas |\n| `department` | string | **Yes** | Department |\n| `date` | string | No | Tanggal |\n| `status` | string | No | Status |\n\n## Response Sukses (201 Created)\n```json\n{ \"status\": true, \"data\": { \"id\": 5 } }\n```\n\n> **Catatan:** ID prioritas baru otomatis tersimpan ke variable `{{priority_id}}`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Priority",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"High\",\n    \"department\": \"IT\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-priority/{{priority_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-priority",
+                                "{{priority_id}}"
+                            ]
+                        },
+                        "description": "# Update Priority\n\nMemperbarui data **prioritas** yang sudah ada.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required |\n| --- | --- | --- |\n| `priority_id` | string | Yes |\n\n## Request Body (JSON)\n| Field | Tipe | Required |\n| --- | --- | --- |\n| `description` | string | **Yes** |\n| `department` | string | **Yes** |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Prioritas tidak ditemukan |\n| `422` | Validasi gagal |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Priority",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-priority/{{priority_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-priority",
+                                "{{priority_id}}"
+                            ]
+                        },
+                        "description": "# Delete Priority\n\n**Soft delete** prioritas.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required |\n| --- | --- | --- |\n| `priority_id` | string | Yes |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Prioritas tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Ticket Status",
+            "description": "CRUD master status ticket.\ngetAll() menggunakan ORDER BY id ASC untuk keperluan step bar di FE.\nValidasi create/update: description dan department wajib ada.",
+            "item": [
+                {
+                    "name": "List Statuses",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-status?page=1&per_page=10",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-status"
+                            ],
+                            "query": [
+                                {
+                                    "key": "page",
+                                    "value": "1"
+                                },
+                                {
+                                    "key": "per_page",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "department",
+                                    "value": "",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "description": "# List Statuses\n\nMengambil daftar **master status** tiket. Digunakan FE untuk step bar / stepper.\n\n---\n\n## Query Parameters\n| Parameter | Tipe | Required | Default | Keterangan |\n| --- | --- | --- | --- | --- |\n| `page` | int | No | 1 | Nomor halaman |\n| `per_page` | int | No | 10 | Jumlah per halaman |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [\n        { \"status_id\": \"1\", \"status\": \"Open\" },\n        { \"status_id\": \"2\", \"status\": \"Inprogress\" },\n        { \"status_id\": \"3\", \"status\": \"Done\" },\n        { \"status_id\": \"4\", \"status\": \"Cancel\" }\n    ]\n}\n```\n\n> **Catatan:** `ticket_status` = STATE (kondisi saat ini). Untuk JOURNEY (riwayat), lihat `ticket_tracking`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Detail Status",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-status/{{status_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-status",
+                                "{{status_id}}"
+                            ]
+                        },
+                        "description": "# Detail Status\n\nMengambil **detail** satu status berdasarkan `status_id`.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `status_id` | int | Yes | Status ID (PK) |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Status tidak ditemukan |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Create Status",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "exec": [
+                                    "var jsonData = pm.response.json();",
+                                    "if (jsonData.data && jsonData.data.id) {",
+                                    "    pm.environment.set('status_id', jsonData.data.id);",
+                                    "}"
+                                ],
+                                "type": "text/javascript"
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"Open\",\n    \"department\": \"IT\",\n    \"date\": \"2026-04-07\",\n    \"status\": \"active\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-status",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-status"
+                            ]
+                        },
+                        "description": "# Create Status\n\nMembuat **status baru**.\n\n---\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `description` | string | **Yes** | Nama status |\n| `department` | string | **Yes** | Department |\n\n> **Catatan:** ID status baru otomatis tersimpan ke variable `{{status_id}}`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Update Status",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"description\": \"In Progress\",\n    \"department\": \"IT\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-status/{{status_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-status",
+                                "{{status_id}}"
+                            ]
+                        },
+                        "description": "# Update Status\n\nMemperbarui data **status** yang sudah ada.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required |\n| --- | --- | --- |\n| `status_id` | int | Yes |\n\n## Request Body (JSON)\n| Field | Tipe | Required |\n| --- | --- | --- |\n| `description` | string | **Yes** |\n| `department` | string | **Yes** |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Delete Status",
+                    "request": {
+                        "method": "DELETE",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-status/{{status_id}}",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-status",
+                                "{{status_id}}"
+                            ]
+                        },
+                        "description": "# Delete Status\n\n**Soft delete** status.\n\n---\n\n## Path Parameters\n| Parameter | Tipe | Required |\n| --- | --- | --- |\n| `status_id` | int | Yes |\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `404` | Status tidak ditemukan |"
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "Timeline & Finish Flow",
+            "item": [
+                {
+                    "name": "GET /api/ticket-tracking",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-tracking",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-tracking"
+                            ]
+                        },
+                        "description": "# List Master Step Tracking\n\nMengambil daftar **master data milestone** timeline tiket.\n\n---\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [\n        { \"id\": \"1\", \"name\": \"Dibuat\", \"description\": \"Ticket open\" },\n        { \"id\": \"2\", \"name\": \"Diterima\", \"description\": \"Sudah dilihat dept ahli\" },\n        { \"id\": \"3\", \"name\": \"Feedback\", \"description\": \"Sudah difeedback\" },\n        { \"id\": \"4\", \"name\": \"Finish\", \"description\": \"Disubmit finish oleh user\" },\n        { \"id\": \"5\", \"name\": \"Dibatalkan\", \"description\": \"Tiket dibatalkan\" }\n    ]\n}\n```\n\n> **Catatan:** `ticket_tracking` = JOURNEY (milestone). Berbeda dengan `ticket_status` = STATE. Keduanya disinkronkan otomatis via `TimelineService::logEvent()`."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /api/ticket-history",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-history?ticket_id=T202604030001",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-history"
+                            ],
+                            "query": [
+                                {
+                                    "key": "ticket_id",
+                                    "value": "T202604030001"
+                                }
+                            ]
+                        },
+                        "description": "# Ticket History (Timeline per Ticket)\n\nMengambil **riwayat tracking step** untuk satu tiket, JOIN ke master `ticket_tracking`.\n\n---\n\n## Query Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | **Yes** | ID tiket (contoh: `T202604030001`) |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": [\n        {\n            \"id\": \"1\",\n            \"ticket_id\": \"T202604030001\",\n            \"date\": \"2026-04-03 09:20:21\",\n            \"tracking_id\": \"1\",\n            \"tracking_name\": \"Dibuat\",\n            \"description\": \"Ticket dibuat\"\n        }\n    ]\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `422` | Parameter `ticket_id` tidak diisi |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /api/ticket-history",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"ticket_id\": \"T202604030002\",\n    \"tracking_id\": 2,\n    \"description\": \"Ticket telah dicek dan diterima oleh departemen IT\",\n    \"updateby\": \"U001 - Budi\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-history",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-history"
+                            ]
+                        },
+                        "description": "# Log Event Manual (Transisi Timeline)\n\nMencatat **transisi milestone** tiket. Menggunakan `TimelineService::logEvent()` yang akan otomatis:\n1. `INSERT` ke `ticket_history`\n2. Auto-sync `ticket.status` sesuai correlation map\n\n---\n\n## Correlation Map\n| tracking_id | Step | ticket.status |\n| --- | --- | --- |\n| 1 | Dibuat | 1 (Open) |\n| 2 | Diterima | 1 (Open) |\n| 3 | Feedback | 3 (Feedback) |\n| 4 | Finish | 2 (Done) |\n| 5 | Dibatalkan | 4 (Cancel) |\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | **Yes** | ID tiket |\n| `tracking_id` | int | **Yes** | ID tracking step (1-5) |\n| `description` | string | No | Catatan |\n| `updateby` | string | No | Siapa yang melakukan |\n\n## Contoh Request Body\n```json\n{\n    \"ticket_id\": \"T202604030002\",\n    \"tracking_id\": 2,\n    \"description\": \"Ticket diterima oleh departemen IT\",\n    \"updateby\": \"U001 - Budi\"\n}\n```\n\n## Response Sukses (201 Created)\n```json\n{ \"status\": true, \"message\": \"Event berhasil dicatat\", \"data\": { \"id\": 4 } }\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `422` | Validasi gagal |\n| `500` | Transaksi DB gagal |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "GET /api/ticket-history/can-finish",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-history/can-finish?ticket_id=T202604030001",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-history",
+                                "can-finish"
+                            ],
+                            "query": [
+                                {
+                                    "key": "ticket_id",
+                                    "value": "T202604030001"
+                                }
+                            ]
+                        },
+                        "description": "# Check Finish Eligibility\n\nMengecek apakah tiket **eligible untuk di-finish**. FE gunakan untuk **show/hide tombol Finish**.\n\n---\n\n## Business Rules\nTiket bisa di-finish jika **SEMUA** kondisi terpenuhi:\n1. `ticket.status` ≠ 2 (belum Done)\n2. Sudah punya feedback di `ticket_feedback`\n3. `feedback.created_at` sudah ≥ **24 jam** lalu\n4. Belum pernah ada step \"Finish\" di `ticket_history`\n\n## Query Parameters\n| Parameter | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | **Yes** | ID tiket |\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"data\": {\n        \"can_finish\": false,\n        \"reason\": \"Belum mencapai 24 jam sejak feedback terakhir (baru 5.2 jam)\",\n        \"feedback_at\": \"2026-04-06 04:08:07\",\n        \"hours_since_feedback\": 5.2\n    }\n}\n```\n\n## Kemungkinan Nilai `reason`\n| reason | Penjelasan |\n| --- | --- |\n| `Ticket tidak ditemukan` | ticket_id tidak valid |\n| `Ticket sudah selesai (Done)` | Status sudah = 2 |\n| `Ticket sudah pernah di-finish` | Ada step Finish di history |\n| `Belum ada feedback` | Belum ada data di ticket_feedback |\n| `Belum mencapai 24 jam...` | Jeda waktu belum cukup |\n| `Eligible — feedback telah melebihi 1x24 jam` | ✅ Boleh finish |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /api/ticket-history/finish",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"ticket_id\": \"T202604030001\",\n    \"updateby\": \"U001 - Budi (User)\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-history/finish",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-history",
+                                "finish"
+                            ]
+                        },
+                        "description": "# Manual Finish (Tombol Selesai)\n\nDipanggil ketika **user menekan tombol Finish** di UI.\n\n---\n\n## Business Logic\n1. Validasi eligibility (aturan 24 jam)\n2. Jika eligible → `logEvent(tracking_id=4)` → auto-sync `ticket.status = 2 (Done)`\n3. Jika tidak eligible → return error 422\n\n## Request Body (JSON)\n| Field | Tipe | Required | Keterangan |\n| --- | --- | --- | --- |\n| `ticket_id` | string | **Yes** | ID tiket |\n| `updateby` | string | No | Siapa yang memfinish |\n\n## Contoh Request Body\n```json\n{\n    \"ticket_id\": \"T20260408FIN01\",\n    \"updateby\": \"U001 - Budi\"\n}\n```\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"message\": \"Ticket berhasil di-finish\",\n    \"data\": {\n        \"ticket_id\": \"T20260408FIN01\",\n        \"history_id\": 10,\n        \"finished_at\": \"2026-04-08 11:00:00\",\n        \"status_synced_to\": 2\n    }\n}\n```\n\n## Response Error\n| Code | Keterangan |\n| --- | --- |\n| `422` | Tidak eligible (reason: `Belum mencapai 24 jam...` / `Belum ada feedback` / `Ticket sudah pernah di-finish`) |"
+                    },
+                    "response": []
+                },
+                {
+                    "name": "POST /api/ticket-scheduler/auto-finish",
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{base_url}}/api/ticket-scheduler/auto-finish",
+                            "host": [
+                                "{{base_url}}"
+                            ],
+                            "path": [
+                                "api",
+                                "ticket-scheduler",
+                                "auto-finish"
+                            ]
+                        },
+                        "description": "# Auto-Finish Scheduler (Cron Job)\n\nEndpoint untuk dipanggil oleh **CRON** secara berkala (rekomendasi: setiap 1 jam).\n\n---\n\n## Business Logic\n1. Scan SEMUA tiket dengan `status = 3` (Feedback)\n2. Filter: `feedback.created_at` ≥ 24 jam & belum pernah Finish\n3. Loop per tiket → `finishTicket()` → auto-sync status ke Done\n\n## Contoh Crontab\n```bash\n0 * * * * curl -X POST -H \"Authorization: Bearer <token>\" http://localhost/api/ticket-scheduler/auto-finish\n```\n\n## Response Sukses (200 OK)\n```json\n{\n    \"status\": true,\n    \"message\": \"3 ticket berhasil di-auto-finish\",\n    \"data\": {\n        \"finished_count\": 3,\n        \"ticket_ids\": [\"T20260408FIN01\", \"T20260408FIN02\", \"T20260408FIN03\"],\n        \"errors\": []\n    }\n}\n```\n\n## Response saat Tidak Ada yang Eligible\n```json\n{\n    \"status\": true,\n    \"message\": \"Tidak ada ticket yang perlu di-finish\",\n    \"data\": { \"finished_count\": 0, \"ticket_ids\": [], \"errors\": [] }\n}\n```"
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ]
+}
